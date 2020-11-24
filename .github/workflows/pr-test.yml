@@ -1,0 +1,33 @@
+name: PR Test
+
+on: pull_request
+
+jobs:
+  cfn-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install cfn-lint
+        run: |
+          pip install cfn-lint==0.41.0
+      - name: Lint Cloudformation templates
+        run: |
+          cfn-lint starter/*.yml -i W
+
+  checkov-job:
+    runs-on: ubuntu-latest
+    name: checkov-action
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@master
+
+      - name: Run Checkov action
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          file: starter/*.yml
+          quiet: true # optional: display only failed checks
+          framework: cloudformation # optional: run only on a specific infrastructure {cloudformation,terraform,kubernetes,all}
