@@ -1,0 +1,13 @@
+[Unit]
+Description=Flask web server
+[Install]
+WantedBy=multi-user.target
+[Service]
+User=ubuntu
+PermissionsStartOnly=true
+ExecStart=/usr/bin/python3 /home/ubuntu/app.py
+TimeoutSec=600
+Restart=on-failure
+RuntimeDirectoryMode=755
+Environment=S3_FREE_RECIPES=cand-c3-free-recipes-745926752740
+Environment=S3_SECRET_RECIPES=cand-c3-secret-recipes-745926752740

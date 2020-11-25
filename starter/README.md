@@ -478,3 +478,10 @@ Once your project has been submitted and reviewed - to prevent undesired charges
 
 Bake one of the desserts from the recipe text files and submit a picture. :-)
 
+# Implementation Notes
+1. All exercise screen shots are in directories named outcomes/exercise<n>
+e.g. outcomes/exercise2 has screenshots related to exercise 1.
+2. Done GitHub actions integration for cfn-lint and checkov-action
+3. scripts/security-stack-aws.sh contains commands used to create stacks.
+4. outcomes/exercise6/clean.sh contains commands to cleanup resources.
+5. Attack Instance has history  scripts/Attackhistory.sh. It should be cleared :)

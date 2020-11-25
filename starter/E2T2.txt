@@ -1,3 +1,11 @@
 Research and analyze which of the vulnerabilities appear to be related to the code that was deployed for the environment in this project.
+AWS Config:
+outcomes/exercise2/AWSConfig.txt
+
+AWS Inspector Findings:
+outcomes/exercise2/AWSInspectorFindings.txt
+
+Security Hub:
+outcomes/exercise2/SecurityHub.txt
 
 Bonus - provide recommendations on how to remediate the vulnerabilities.

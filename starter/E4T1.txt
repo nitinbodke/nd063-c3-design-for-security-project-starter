@@ -1,5 +1,19 @@
-
-
 # Identify 2-3 changes that can be made to our environment to prevent an ssh brute force attack from the internet.
+1. Update SSH config to remove password authentication on RecipeWebServiceInstance instance
+2. Limit WebAppSG access to AppLoadBalancerSG. Block all other access to WebAppSG.
+3. For SSH, use AWS System Manager Session Manager. Move to immutable Web Service instance.
 
 # Neither instance should have had access to the secret recipes bucket, in the even that instance API credentials were compromised how could we have prevented access to sensitive data.
+First attempt:
+1. Create group.
+2. Add all privileged users to this group.
+3. Restrict S3BucketRecipesSecret access to this group only.
+Above approach do not work.
+Ref: https://www.reddit.com/r/aws/comments/beiug5/s3_bucket_security_using_iam_group/
+
+Another attempt:
+Ref: https://aws.amazon.com/blogs/security/how-to-restrict-amazon-s3-bucket-access-to-a-specific-iam-role/
+Ref: https://docs.amazonaws.cn/en_us/IAM/latest/UserGuide/id_roles_create_for-user.html
+1. Use Role to restrict access to S3 bucket.
+2. Only allow privileged users to assume this role.
+

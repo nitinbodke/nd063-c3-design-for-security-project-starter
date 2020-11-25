@@ -1,0 +1,296 @@
+Description:  This template deploys an S3 bucket for storage of recipes.
+
+Resources:
+  S3BucketRecipesFree:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join [ "-", [ "cand-c3-free-recipes", !Ref 'AWS::AccountId' ] ]
+      # enforce encryption at rest
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # enable S3 access logging
+      LoggingConfiguration:
+        DestinationBucketName:
+          Ref: LoggingBucket
+        LogFilePrefix: RecipesFree
+  S3BucketRecipesSecret:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join [ "-", [ "cand-c3-secret-recipes", !Ref 'AWS::AccountId' ] ]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LoggingConfiguration:
+        DestinationBucketName:
+          Ref: LoggingBucket
+        LogFilePrefix: RecipesFree
+  S3BucketVPCFlowLogs:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join [ "-", [ "cand-c3-vpc-flow-logs", !Ref 'AWS::AccountId' ] ]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  # Remediation for securityhub-vpc-flow-logs-enabled-cde87f53
+  # Adding bucket for other VPCs in account for flow logs
+  S3BucketPrimaryVPCFlowLogs:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join [ "-", [ "cand-c3-primary-vpc-flow-logs", !Ref 'AWS::AccountId' ] ]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  S3BucketDefaultVPCFlowLogs:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join [ "-", [ "cand-c3-default-vpc-flow-logs", !Ref 'AWS::AccountId' ] ]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  # S3 access logging bucket
+  LoggingBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: LogDeliveryWrite
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # Ref: https://www.marksayson.com/blog/secure-s3-config-with-cloudformation/#:~:text=You%20can%20enable%20encryption%20by,%2DS3%20or%20SSE%2DKMS.&text=I'd%20suggest%20setting%20up,is%20a%20helpful%20security%20capability.
+  # Secure S3 policy
+  # Ref: https://stackoverflow.com/questions/15302103/how-to-specify-multiple-buckets-in-a-bucketpolicy-in-a-cfn-template
+  # S3 Bucket Policy can not be applied to multiple buckets. Hence using IAM policy.
+  # Cons: this appraoch has limitation that users/groups/roles has to be known at the time of policy creation.
+  # So it makes it hard to apply restricitons in dynamic environment!
+  # i.e. where users/roles/groups are added/deleted
+  #  SecureS3BucketPolicy:
+  #    DependsOn:
+  #      - S3BucketRecipesFree
+  #    Type: 'AWS::IAM::Policy'
+  #    Properties:
+  #      PolicyName: SecureS3BucketPolicy
+  #      Users:
+  #        - 'nitin'
+  #      PolicyDocument:
+  #        Statement:
+  #          - Action: 's3:PutObject'
+  #            Condition:
+  #              'Null':
+  #                's3:x-amz-server-side-encryption': true
+  #            Effect: Deny
+  #            Resource:
+  #              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+  #            Sid: DenyPublishingUnencryptedResources
+  #          - Action: 's3:PutObject'
+  #            Condition:
+  #              'ForAllValues:StringNotEquals':
+  #                's3:x-amz-server-side-encryption':
+  #                  - AES256
+  #                  - 'aws:kms'
+  #            Effect: Deny
+  #            Resource:
+  #              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+  #            Sid: DenyIncorrectEncryptionHeader
+  #          - Action:
+  #              - 's3:GetObject'
+  #              - 's3:PutObject'
+  #            Condition:
+  #              Bool:
+  #                'aws:SecureTransport': false
+  #            Effect: Deny
+  #            Resource:
+  #              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+  #            Sid: DenyUnencryptedConnections
+  #          - Action:
+  #              - 's3:PutBucketAcl'
+  #              - 's3:PutObject'
+  #              - 's3:PutObjectAcl'
+  #            Condition:
+  #              StringEquals:
+  #                's3:x-amz-acl':
+  #                  - authenticated-read
+  #                  - public-read
+  #                  - public-read-write
+  #            Effect: Deny
+  #            Resource:
+  #              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}'
+  #              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+  #            Sid: DenyPublicReadAcl
+  #          - Action:
+  #              - 's3:PutBucketAcl'
+  #              - 's3:PutObject'
+  #              - 's3:PutObjectAcl'
+  #            Condition:
+  #              StringLike:
+  #                's3:x-amz-grant-read':
+  #                  - '*http://acs.amazonaws.com/groups/global/AllUsers*'
+  #                  - '*http://acs.amazonaws.com/groups/global/AuthenticatedUsers*'
+  #            Effect: Deny
+  #            Resource:
+  #              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}'
+  #              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+  #            Sid: DenyGrantingPublicRead
+
+  S3BucketPolicyRecipesFree:
+    DependsOn:
+      - S3BucketRecipesFree
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref S3BucketRecipesFree
+      PolicyDocument:
+        Statement:
+          - Action: 's3:PutObject'
+            Condition:
+              'Null':
+                's3:x-amz-server-side-encryption': true
+            Effect: Deny
+            Principal: '*'
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+            Sid: DenyPublishingUnencryptedResources
+          - Action: 's3:PutObject'
+            Condition:
+              'ForAllValues:StringNotEquals':
+                's3:x-amz-server-side-encryption':
+                  - AES256
+                  - 'aws:kms'
+            Effect: Deny
+            Principal: '*'
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+            Sid: DenyIncorrectEncryptionHeader
+          - Action:
+              - 's3:*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
+            Effect: Deny
+            Principal: '*'
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+            Sid: DenyUnencryptedConnections
+          - Action:
+              - 's3:PutBucketAcl'
+              - 's3:PutObject'
+              - 's3:PutObjectAcl'
+            Condition:
+              StringEquals:
+                's3:x-amz-acl':
+                  - authenticated-read
+                  - public-read
+                  - public-read-write
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}'
+              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+            Sid: DenyPublicReadAcl
+          - Action:
+              - 's3:PutBucketAcl'
+              - 's3:PutObject'
+              - 's3:PutObjectAcl'
+            Condition:
+              StringLike:
+                's3:x-amz-grant-read':
+                  - '*http://acs.amazonaws.com/groups/global/AllUsers*'
+                  - '*http://acs.amazonaws.com/groups/global/AuthenticatedUsers*'
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}'
+              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesFree}/*'
+            Sid: DenyGrantingPublicRead
+
+  S3BucketPolicyRecipesSecret:
+    DependsOn:
+      - S3BucketRecipesSecret
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref S3BucketRecipesSecret
+      PolicyDocument:
+        Statement:
+          - Action: 's3:PutObject'
+            Condition:
+              'Null':
+                's3:x-amz-server-side-encryption': true
+            Effect: Deny
+            Principal: '*'
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesSecret}/*'
+            Sid: DenyPublishingUnencryptedResources
+          - Action: 's3:PutObject'
+            Condition:
+              'ForAllValues:StringNotEquals':
+                's3:x-amz-server-side-encryption':
+                  - AES256
+                  - 'aws:kms'
+            Effect: Deny
+            Principal: '*'
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesSecret}/*'
+            Sid: DenyIncorrectEncryptionHeader
+          - Action:
+              - 's3:*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
+            Effect: Deny
+            Principal: '*'
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesSecret}/*'
+            Sid: DenyUnencryptedConnections
+          - Action:
+              - 's3:PutBucketAcl'
+              - 's3:PutObject'
+              - 's3:PutObjectAcl'
+            Condition:
+              StringEquals:
+                's3:x-amz-acl':
+                  - authenticated-read
+                  - public-read
+                  - public-read-write
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesSecret}'
+              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesSecret}/*'
+            Sid: DenyPublicReadAcl
+          - Action:
+              - 's3:PutBucketAcl'
+              - 's3:PutObject'
+              - 's3:PutObjectAcl'
+            Condition:
+              StringLike:
+                's3:x-amz-grant-read':
+                  - '*http://acs.amazonaws.com/groups/global/AllUsers*'
+                  - '*http://acs.amazonaws.com/groups/global/AuthenticatedUsers*'
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesSecret}'
+              - !Sub 'arn:${AWS::Partition}:s3:::${S3BucketRecipesSecret}/*'
+            Sid: DenyGrantingPublicRead
+
+
+Outputs:
+  BucketNameRecipesFree:
+    Value: !Ref 'S3BucketRecipesFree'
+    Description: Name of the Amazon S3 bucket that you will upload free recipes to.
+    Export:
+      Name: BucketNameRecipesFree
+  BucketNameRecipesFreeARN:
+    Value: !GetAtt S3BucketRecipesFree.Arn
+    Description: Arn of the Amazon S3 bucket that you will upload free recipes to.
+    Export:
+      Name: BucketNameRecipesFreeARN
+  BucketNameRecipesSecret:
+    Value: !Ref 'S3BucketRecipesSecret'
+    Description: Name of the Amazon S3 bucket that you will upload secret recipes to.
+    Export:
+      Name: BucketNameRecipesSecret
+  BucketArnVPCFlowLogs:
+    Value: !GetAtt S3BucketVPCFlowLogs.Arn
+    Description: Arn of the Amazon S3 bucket that have vpc flow logs for this project
+    Export:
+      Name: BucketArnVPCFlowLogs

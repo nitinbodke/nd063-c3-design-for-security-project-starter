@@ -1,0 +1,76 @@
+Based on the architecture diagram, and the steps you have taken so far to upload data and access the application web service, identify at least 2 obvious poor practices as it relates to security.  Include justification.
+
+# Poor practice 1
+Source: Architecture diagram
+"Free Recipes" bucket is accessible from both WebAppSG and AttackInstanceSG
+Solution:
+Limit "Free Recipes" bucket access to WebAppSG
+
+# Poor practice 2
+Source: Architecture diagram
+Instances in WebAppSG are accessible via internet.
+Solution:
+Limit WebAppSG access to AppLoadBalancerSG. Block all other access to WebAppSG.
+
+# Poor practice 3
+Source: Architecture diagram
+Both buckets are accessed over the internet. So data leaves the VPC.
+Solution:
+Use VPC endpoints for buckets, so data limited withing VPC.
+
+# Poor practice 4
+Source: c3-app.yml
+Instance role is not fine tuned.
+Solution:
+InstanceRole:
+1. S3 actions should be fined tune:
+    1. GetObject
+2. Resource should be limited to S3BucketRecipesFree
+i.e.
+Resource": [
+    "arn:aws:s3:::S3BucketRecipesFree/*"
+],
+
+# Poor practice 5:
+Source: c3-s3.yml
+Data in buckets is not encrypted.
+Solution:
+Encrypt data at rest in S3
+
+# Poor practice 6:
+Source: c3-s3.yaml
+AWS account id should is a part of bucket name.
+Solution:
+Use randomly generated number instead of AWS account number.
+
+# Poor practice 7:
+Source: c3-app.yaml
+WebAppSG ingress configuration is too open.
+Narrow down ingress. Remove fallowing.
+      - IpProtocol: -1
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+Solution:
+1. Remove all protocol access.
+2. No need to open SSH port
+3. As we are using 5000 to server traffic, drop port 80 from list.
+
+# Poor practice 8:
+Source: c3-app.yaml
+key/pair ssh access is enabled for Web Service Instance.
+Solution:
+For SSH, use AWS System Manager Session Manager.
+Move to immutable Web Service instance.
+
+# Poor practice 9:
+Source: c3-app.yaml
+Application is accessible over http. Suspectible to Man-in-middle attack.
+Solution:
+Use HTTPS.

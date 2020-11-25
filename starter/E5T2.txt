@@ -1,13 +1,160 @@
+Task 1:
+PPT Explaination:
+Shifting left approach should applied.
+Hence, IDE plugin should be used to catch issues when they are introduced.
+Application code:
+IDE Plug-in:
+1. SonarLint in IntelliJ IDEA
+
+Infrastructure as code compliance scanning:
+Shifting left approach:
+IDE Plug-in:
+1. AWS CloudFormation
+2. Aws toolkit
+3. cfn-lint
+
+
+CI/CD:
+Application Code:
+1. SonarCloud
+
+Template scanning:
+CloudFormation:
+    1. Cfripper
+    2. Cloudsploit (https://cloudsploit.com/cloudformation)
+    3. cfn-lint
+    4. checkov (https://github.com/bridgecrewio/checkov)
+Terraform:
+    1. terrascan (https://github.com/accurics/terrascan)
+    2. tfsec (https://github.com/tfsec/tfsec)
+
+
+Deployable Artifacts Scanning:
+AMI image scanning:
+1. Amazon Inspector (https://aws.amazon.com/blogs/security/how-to-set-up-continuous-golden-ami-vulnerability-assessments-with-amazon-inspector/)
+2. Qualys Virtual Scanner (https://aws.amazon.com/blogs/apn/creating-a-golden-ami-pipeline-integrated-with-qualys-for-vulnerability-assessments/)
+3. Tenable’s vulnerability scanner (https://aws.amazon.com/blogs/awsmarketplace/build-a-golden-ami-pipeline-with-tenable-io-available-in-aws-marketplace/)
+4. EC2 Image Builder (https://aws.amazon.com/blogs/awsmarketplace/announcing-the-golden-ami-pipeline/)
+
+Container image scanning:
+Two types of scanning:
+Static: Detect vulnerabilities in images before a container is launched.
+Tools:
+1. clair (https://github.com/quay/clair)
+2. Trivy
+3. hadolint (Dockerfile linter)
+
+AWS:
+Ref:
+https://medium.com/faun/container-security-101-scanning-images-for-vulnerabilities-d25c9a7d02f5
+https://aws.amazon.com/blogs/containers/amazon-ecr-native-container-image-scanning/
+Uses CoreOS Clair for scanning.
+Scan on push:
+aws ecr create-repository \
+    --repository-name sample-repo \
+    --image-scanning-configuration scanOnPush=true \
+    --region us-east-1
+
+Scan existing image:
+aws ecr start-image-scan --repository-name name --image-id imageTag=tag_name --region us-east-1
+
+Dynamic:
+    1. carried out in a runtime environment
+    2. identify vulnerabilities introduced by software installed post-build as well as zero-day vulnerabilities.
+Tools:
+Open Source:
+1. CNCF Falco (https://falco.org/)
+2. Anchore Engine (https://github.com/anchore/anchore-engine)
+
+Commercial:
+1. aquasec
+2. sysdig
+3. twistlock
+4. Qualys Container Security (https://aws.amazon.com/marketplace/pp/Qualys-Qualys-Container-Security-US-Only/B07KDPJQCS)
+
+
+Post-deployment compliance scanning:
+AWS Native:
+1. AWS Inspector
+2. AWS Config
+3. AWS Security Hub
+4. AWS GaurdDuty
+
+Note: In pipeline we have tried to limit to open soure and AWS native tools.
+
+
+Task 2 - Tools and Documentation
 # Identify tools that will allow you to do the following:
 
 ## Scan infrastructure as code templates
+1. CloudFormation:
+    1. Cfripper
+    2. Cloudsploit
+    3. cfn-lint
 
 ### Example vulnerability
+cfn-lint:
+outcomes/exercise5/cfn-lint-output.png
+checkov:
+outcomes/exercise5/checkov-integration-with-github-actions.png
 
 ##Scan AMI’s or containers for OS vulnerabilities
+OS vulnerabilities:
+1. AWS Inspector for OS
+2.
+
+Containers:
+Open source tools:
+    1. Clair
+    2. Anchore
+    3. Trivy
+
+Commercial tools:
+    1. Native ECR scanning (Managed Clair)
+    2. Aqua Security
+    3. Sysdig Secure
+    4. Prisma Cloud 2.0 Container Security
+
+Dynamic container Monitoring:
+1. CNCF Falco
+2. NeuVector Container Security
 
 ### Example vulnerability
+Ref: https://aws.amazon.com/blogs/containers/implementing-runtime-security-in-amazon-eks-using-cncf-falco/
+TODO
 
 ##Scan an AWS environment for cloud configuration vulnerabilities
+AWS Native:
+1. AWS Config
+2. Security Hub
+2. Inspector
+
+Open Source:
+1. Prowler
+2. Scout2
+3. Cloudsploit
+4. CloudCustodian etc.
+
+Commercial:
+1. Fague
+2. Palo Alto Prisma Cloud
+3. CloudConformity
+4. CheckPoint CloduGaurd Dome9 etc.
 
 ### Example vulnerability
+DYI Cloudsploit
+Ref: https://github.com/aquasecurity/cloudsploit/blob/master/docs/aws.md#cloud-provider-configuration
+Install cloudsploit:
+$ git clone https://github.com/aquasecurity/cloudsploit.git
+$ cd cloudsploit
+$ docker build . -t cloudsploit:0.0.1
+$ docker run cloudsploit:0.0.1 -h
+
+# Create user for cloudsploit
+# https://github.com/aquasecurity/cloudsploit/blob/master/docs/aws.md#cloud-provider-configuration
+
+# Run scan
+docker run -e AWS_ACCESS_KEY_ID=xx -e AWS_SECRET_ACCESS_KEY=xx cloudsploit:0.0.1  --compliance=pci --console=text > cloudsploit-pci-output.txt
+
+Output:
+outcomes/exercise5/cloudsploit-pci-output.txt

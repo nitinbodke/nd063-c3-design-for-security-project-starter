@@ -1,0 +1,66 @@
+securityhub-vpc-flow-logs-enabled-cde87f53:
+Checks whether Amazon Virtual Private Cloud flow logs are found and enabled for Amazon VPC.
+Resources:
+Non project resources:
+vpc-0dfb3306b00c9a91a (Primary VPC)
+vpc-4dd11d30 (default VPC)
+Solution: Enable VPC logs
+1. Add S3 bucket to hold logs
+2. Create flow logs for both VPCs
+aws ec2 create-flow-logs --resource-type VPC --resource-ids vpc-0dfb3306b00c9a91a
+ --traffic-type ALL --log-destination-type s3 --log-destination arn:aws:s3:::cand-c3-primary-vpc-flow-logs-745926752740
+aws ec2 create-flow-logs --resource-type VPC --resource-ids vpc-4dd11d30 --traffic-type ALL --log-destination-type s3 --log-destination arn:aws:s3:::cand-c3-default-vpc-flow-logs-745926752740
+
+securityhub-rds-snapshot-encrypted-8f3e0bb0:
+Description:
+Checks whether Amazon Relational Database Service (Amazon RDS) DB snapshots are encrypted. The rule is NON_COMPLIANT, if Amazon RDS DB snapshots are not encrypted.
+Solution:
+These snapshots were not required. Cleaned the resources.
+
+securityhub-s3-bucket-ssl-requests-only-5bead03c
+Resources:
+cand-c3-free-recipes-745926752740
+cand-c3-secret-recipes-745926752740
+cand-c3-vpc-flow-logs-745926752740
+Description:
+Checks whether S3 buckets have policies that require requests to use Secure Socket Layer (SSL).
+Solution:
+Added bucket S3BucketPolicyRecipesFree and S3BucketPolicyRecipesSecret bucket policies.
+
+securityhub-s3-bucket-logging-enabled-b9484644
+Resources:
+cand-c3-free-recipes-745926752740
+cand-c3-secret-recipes-745926752740
+cand-c3-vpc-flow-logs-745926752740
+Description: Checks whether logging is enabled for your S3 buckets.
+Solution:
+1. Added logging bucket c3-s3-loggingbucket-ldqmy95xe91d
+2. Configured it for logging with cand-c3-free-recipes-745926752740 and cand-c3-secret-recipes-745926752740 buckets.
+3. Skipped cand-c3-vpc-flow-logs-745926752740 as its logging bucket.
+
+securityhub-s3-bucket-server-side-encryption-enabled-6e950d22
+Resources:
+cand-c3-free-recipes-745926752740
+cand-c3-secret-recipes-745926752740
+cand-c3-vpc-flow-logs-745926752740
+Description: Checks that your Amazon S3 bucket either has Amazon S3 default encryption enabled or that the S3 bucket policy explicitly denies put-object requests without server side encryption.
+Solution:
+Added server side encryption to all buckets.
+
+securityhub-vpc-default-security-group-closed-c352350f
+Resources:
+sg-013dfd73f4f0e0cb5
+sg-0354ffa386b42b8b9
+sg-43a50173
+Description: Checks whether the default security group for VPC is closed.
+Solution:
+Ref: https://github.com/servian/aws-auto-remediate
+Delete default ingress and egress rules.
+
+securityhub-ec2-ebs-encryption-by-default-904754ef
+Resources:
+745926752740
+Description: Checks that Amazon Elastic Block Store (EBS) encryption is enabled by default. The rule is NON_COMPLIANT if the encryption is not enabled.
+Solution:
+https://aws.amazon.com/blogs/aws/new-opt-in-to-default-encryption-for-new-ebs-volumes/
+aws ec2 --region us-east-1 enable-ebs-encryption-by-default

@@ -1,8 +1,76 @@
-
 # What additional architectural change can be made to reduce the internet facing attack surface of the web application instance.
+Application components:
+EC2: WebInstance
+1. Limit egress to port 5000
+2. Egress to S3?
+2. Manage instance through AWS System Manager
+    1. No exposure to internet is required
+    2. No passwords/keys to manage
+    3. Best is to no login at all i.e. immutable instance.
+3. Can we move it to private subnet?
+4. Use CIS hardened image
+5. Keep instance upto date and patched
+6. Add monitoring for vulnerabilities to ensure both os and apps vulnerabilities are addressed.
+7. Implement monitoring and alerting for suspicious events
+
+
+Web application:
+1. health check in LB
+2. Static code scan
+3. Dynamic code scan
+4. APM
+5. Rate limiting
+6. Implement monitoring and alerting for suspicious events
+7. Caching via CloudFront
+8. WAF to protect from attacks and exploits
+    1. placed in front of public facing application services such as CloudFront  and API Gateway transparently
+    2. Enable WAF monitoring and export logs
+   2.Examples
+        1. Akamai
+     2. Cloudflare
+     3. AWS WAF
+
+
+AppLoadbalancer:
+1. HTTPS
+2. WAF
+3. CloudFront
+
+S3:
+1. Enable versioning on buckets.
+2. Enable MFA delete
+3. Allow SSL request to retrive data from S3 i.e. encryption in flight
+4. VPC endpoint for S3 so that data never leaves VPC
+5. Restrict secret recipes bucket access to specific role.
+
+
+Common Threat vectors:
+1. OWASP 10
+2. Pen Testing
+3. Secret bucket access should be on different network
+4. Monitoring and alerting at all layers:
+    1. User activity
+    2. Network traffic
+    3. Cloud Configuration
+5. Gaurd duty alerts
+6. Use security monitoring with SIEM tool
+    1. Splunk
+    2. Sumologic
+    3. Lacework
+    4. CloudKnox
 
 # Assuming the IAM permissions for the S3 bucket are still insecure, would creating VPC private endpoints for S3 prevent the unauthorized access to the secrets bucket.
+No, if IAM permissions are insecure, VPC private endpoints for S3 do not prevent the unauthorized access.
 
 # Will applying default encryption setting to the s3 buckets encrypt the data that already exists?
+Ref: https://aws.amazon.com/premiumsupport/knowledge-center/s3-existing-objects-default-encryption/#:~:text=Enabling%20default%20encryption%20doesn't,applies%20only%20to%20future%20uploads.&text=Additionally%2C%20any%20objects%20already%20encrypted,remain%20encrypted%20with%20SSE%2DS3.
+1. Enabling default encryption doesn't change the encryption of existing objects in bucket.
+2. Encryption applies to future uploads.
+3. To change the encryption of existing objects,
+    1. You must re-upload the object
+    2. Copy the object over itself.
 
 # What would happen if the original cloud formation templates are applied to this environment.
+Applying original cloud formation templates will
+1. Delete added resources.
+2. Will revert modified resources to match the applied template.
